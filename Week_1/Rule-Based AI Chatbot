@@ -1,0 +1,17 @@
+chatbot_rules={
+    "Hello" : "hi there! welcom to chatbot.",
+    "hii" : "ready to build something.",
+    "Status" : "everything is good.",
+    "Help" : "Try ask me anything?",
+    "Project" : "Project 1: The Rule-Based AI Chatbot blueprint!"
+}
+print("--- DecodeLabs Rule-Based AI Chatbot Initialized ---")
+print("(Type 'exit' or 'bye' to quit)\n")
+while True:
+    raw_input = input("You :")
+    clean_input = raw_input.lower().strip()
+    if clean_input in ["exit" or "bye"]:
+        print("Bot: Terminating continuous loop. Goodbye, Engineer!")
+        break
+    reply = chatbot_rules.get(clean_input, 'Bot: [Fallback Triggered] I do not understand that command. Please try again.')
+    print(f"bot:{reply}\n")
