@@ -1,0 +1,84 @@
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def load_datasets():
+    try:
+        df = pd.read_csv("raw_skills.csv")
+        print("---- successfully loaded 'raw_skills.csv'----- ")
+    except FileNotFoundError:
+        print("---- 'raw_skills.csv' not found. Creating a fallback datasets-----")
+        data = {
+            "Job Role": [
+                "Data Scientist",
+                "DevOps Engineer",
+                "Backend Developer",
+                "Frontend Developer",
+                "Cloud Architect",
+                "Cybersecurity Analyst",
+            ],
+            "Skills": [
+                "Python SQL Machine Learning Data Analysis Statistics Pandas",
+                "AWS Docker Kubernetes CI/CD Automation Linux Bash Git",
+                "Java Python SQL APIs Git Data Structures Django Spring",
+                "JavaScript React HTML CSS TypeScript Web Design Tailwind",
+                "AWS Cloud Computing Azure GCP Security Network Architecture",
+                "Linux Network Security Cryptography Wireshark Firewalls Pentesting",
+            ],
+        }
+        df = pd.DataFrame(data)
+        df.to_csv("raw_skills.csv", index=False)
+    return df
+def get_user_input():
+    print("\n" + "=" * 50)
+    print("----- DECODELABS TECH STACK RECOMMENDER ENGINE ------")
+    print("=" * 50)
+    print("Please enter at least 3 skills you know or want to learn.")
+    skills = []
+    count = 1
+    while True:
+        skill = input(f"Enter skill #{count} (or press Enter to finish): ").strip()
+        if skill:
+            skills.append(skill)
+            count+=1
+        else:
+            if len(skills)< 3:
+                print(f"⚠️ Ingestion Warning: You only entered {len(skills)} skill(s). Please provide at least 3 to run the similarity math accurately.")
+            else:
+                break
+    user_profile = " ".join(skills)
+    return user_profile
+def generate_recomendations(df, user_profile, top_n=3):
+    all_documents = df["Skills"].tolist() + [user_profile]
+    vectorizer = TfidfVectorizer(stop_words="english")
+    tfidf_matrix = vectorizer.fit_transform(all_documents)
+    item_vectors = tfidf_matrix[:-1]
+    user_vector = tfidf_matrix[-1]
+    similarity = cosine_similarity(user_vector, item_vectors).flatten()
+    df["Similarity Score"]= similarity
+    df_sorted = df.sort_values(by="Similarity Score", ascending=False)
+    top_recommendations = df_sorted.head(top_n)
+    return top_recommendations
+def display_output(recommendations):
+    print("\n" + "-" * 50)
+    print("----- YOUR TOP RECOMMENDED TECH STACKS -------- ")
+    print("-" * 50)
+
+    rank = 1
+    for index, row in recommendations.iterrows():
+        score_percentage = row["Similarity Score"] * 100
+        print(f"Rank {rank}: {row['Job Role']}")
+        print(f"   📊 Match Confidence: {score_percentage:.2f}%")
+        print(f"   🛠️ Core Stack: {row['Skills']}")
+        print("-" * 50)
+        rank += 1
+if __name__ == "__main__":
+    # 1. Load Data
+    dataset = load_datasets()
+    # 2. Ingest Inputs
+    user_query = get_user_input()
+    # 3 & 4. Process Engine & Output Truncation
+    top_matches = generate_recomendations(dataset, user_query, top_n=3)
+    # 5. Display recommendations
+    display_output(top_matches)
